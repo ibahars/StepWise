@@ -3,23 +3,20 @@ import requests
 import json
 import os
 from dotenv import load_dotenv
-from prompts import SYSTEM_INSTRUCTIONS
+from StepWise.prompts import SYSTEM_INSTRUCTIONS
 
-# Sayfa yapılandırması
 st.set_page_config(page_title="Algoritmik Rehber", layout="wide")
 load_dotenv()
 
 api_key = os.getenv("API_KEY")
 
 def call_gemini(messages):
-    # Senin listendeki en güncel model: gemini-2.5-flash
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key={api_key}"
 
     headers = {'Content-Type': 'application/json'}
 
     contents = []
     for m in messages:
-        # Google API 'user' ve 'model' rollerini bekler
         role = "model" if m["role"] == "assistant" else "user"
         contents.append({"role": role, "parts": [{"text": m["content"]}]})
 
@@ -37,11 +34,9 @@ def call_gemini(messages):
     except Exception as e:
         return f"❌ Bağlantı Hatası: {str(e)}"
 
-# --- SESSION STATE ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# --- SIDEBAR ---
 with st.sidebar:
     st.title("🚀 Öğrenme Paneli")
     st.divider()
@@ -60,17 +55,13 @@ with st.sidebar:
         st.session_state.messages = []
         st.rerun()
 
-# --- ANA EKRAN ---
 st.title("🤖 Algoritmik Düşünme Mentoru")
 
-# Mesajları Ekrana Bas
 for message in st.session_state.messages:
-    # Gizli talimatları kullanıcıdan sakla
     if not message["content"].startswith("SİSTEM:"):
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-# Kullanıcı Girişi
 if prompt := st.chat_input("Mesajını buraya yaz..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
