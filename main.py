@@ -3,7 +3,7 @@ import requests
 import json
 import os
 from dotenv import load_dotenv
-from StepWise.prompts import SYSTEM_INSTRUCTIONS
+from prompts import SYSTEM_INSTRUCTIONS
 
 st.set_page_config(page_title="Algoritmik Rehber", layout="wide")
 load_dotenv()
