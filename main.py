@@ -22,13 +22,14 @@ def call_gemini(messages):
     payload = {"contents": contents}
     for attempt in range(3):
         try:
-            response = requests.post(url, headers=headers, data=json.dumps(payload))
+            response = requests.post(url, headers=headers, json=payload)
             if response.status_code == 200:
                 return response.json()['candidates'][0]['content']['parts'][0]['text']
             elif response.status_code == 503:
                 time.sleep(2)
                 continue
             else:
+                print(f"Hata Detayı: {response.text}")
                 return f"🚨 API Hatası: {response.status_code}"
         except:
             time.sleep(2)
@@ -55,9 +56,26 @@ with st.sidebar:
     if st.button("📐 Akış Şeması İnşa Edici", use_container_width=True):
         st.session_state.mode = "flowchart"
         st.session_state.flow_nodes, st.session_state.flow_edges = [], []
-        flow_cmd = "SİSTEM: Öğrenci akış şeması moduna geçti. Lütfen ona orta zorlukta, içinde bir karar (Evet/Hayır) olan günlük hayattan bir senaryo ver ve bunu çizmesini iste."
+        flow_cmd = (
+            "SİSTEM: Öğrenci akış şeması moduna geçti. "
+            "Lütfen ona 5. sınıf seviyesinde, içinde mutlaka bir KARAR (Eşkenar Dörtgen) yapısı gerektiren "
+            "detaylı bir günlük hayat problemi ver. Problemi verdikten sonra 'Haydi, şemayı oluşturmaya başla!' de."
+        )
         st.session_state.messages.append({"role": "user", "content": flow_cmd})
         with st.spinner("Senaryo oluşturuluyor..."):
+            res = call_gemini(st.session_state.messages)
+            st.session_state.messages.append({"role": "assistant", "content": res})
+            st.rerun()
+
+    if st.button("🎁 Girdi-Çıktı Kara Kutusu", use_container_width=True):
+        st.session_state.mode = "blackbox"
+        box_cmd = (
+            "SİSTEM: Girdi-Çıktı oyun moduna geçtik. 5. sınıf seviyesinde gizli bir kural belirle. "
+            "Öğrenciye ilk mesajında kuralın temasını (Örn: Basamak oyunları veya toplama-çıkarma dünyası gibi) "
+            "belirterek başla ve kuralı asla doğrudan söyleme."
+        )
+        st.session_state.messages.append({"role": "user", "content": box_cmd})
+        with st.spinner("Kutu hazırlanıyor..."):
             res = call_gemini(st.session_state.messages)
             st.session_state.messages.append({"role": "assistant", "content": res})
             st.rerun()
@@ -69,7 +87,6 @@ with st.sidebar:
 
 st.title("🤖 StepWise: Algoritmik Düşünme Mentoru")
 
-# --- 1. AKIŞ ŞEMASI PANELİ (ARTIK EN ÜSTTE) ---
 if st.session_state.mode == "flowchart":
     with st.container(border=True):
         st.subheader("🛠️ Akış Şeması Tasarım Alanı")
@@ -127,15 +144,33 @@ if st.session_state.mode == "flowchart":
                     st.session_state.messages.append({"role": "assistant", "content": res})
                     st.rerun()
 
-# --- 2. SOHBET AKIŞI (TASARIM ALANININ ALTINDA) ---
+elif st.session_state.mode == "blackbox":
+    with st.container(border=True):
+        st.subheader("🎁 Sihirli Kara Kutu: Algoritma Dedektifi")
+
+        box_viz = graphviz.Digraph()
+        box_viz.attr(rankdir='LR', size='4')
+        box_viz.node("IN", "Girdi", shape="parallelogram", color="purple", style="filled", fillcolor="#E1BEE7")
+        box_viz.node("BOX", "???\n(Gizli İşlem)", shape="box", style="filled", color="black", fontcolor="white", fillcolor="#212121")
+        box_viz.node("OUT", "Çıktı", shape="parallelogram", color="green", style="filled", fillcolor="#C8E6C9")
+        box_viz.edge("IN", "BOX")
+        box_viz.edge("BOX", "OUT")
+
+        c1, c2 = st.columns([1, 1])
+        with c1:
+            st.graphviz_chart(box_viz)
+        with c2:
+            st.write("🕵️ **Gizli Algoritmayı Bul!**")
+            st.write("Agent'ın verdiği ipuçlarını takip et. İçerideki matematiksel veya bilimsel işlemi tahmin etmeye çalış.")
+            st.write("Yanlış tahmin edersen Agent sana yeni bir ipucu (farklı bir girdi-çıktı) verecektir.")
+
 st.divider()
 for message in st.session_state.messages:
     if not message["content"].startswith("SİSTEM:"):
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-# Sohbet girişi her zaman en altta kalır
-if prompt := st.chat_input("Mesajını yaz..."):
+if prompt := st.chat_input("Mesajını yaz.."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"): st.markdown(prompt)
     with st.chat_message("assistant"):
