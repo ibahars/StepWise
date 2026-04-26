@@ -2,7 +2,7 @@
 
 **StepWise** is an interactive, AI-powered educational tool designed for 5th-grade students to master the fundamentals of algorithmic thinking. Using the cutting-edge **Gemini 2.5 Flash** model, StepWise acts as a friendly mentor that guides students through logic, flowcharts, and problem-solving steps.
 
-## Live Demo on Hugging Face: https://huggingface.co/spaces/Fatser/StepWise
+##Live Demo on Hugging Face:  [Stepwise]([https://streamlit.io/](https://huggingface.co/spaces/Fatser/StepWise)) 
 ## 🛠️ Tech Stack
 
 - **Frontend:** [Streamlit](https://streamlit.io/)
